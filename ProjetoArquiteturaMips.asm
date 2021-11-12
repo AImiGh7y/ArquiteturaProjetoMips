@@ -16,7 +16,7 @@ SIZELINS: .word 10
 
 .eqv DATA_SIZE 4
 
-MSG1: .asciiz "O Codigo é: "
+MSG1: .asciiz "O Codigo Ã©: "
 NewLine:    .asciiz     "\n"
 Tab:    .asciiz     "\t"
 
@@ -35,10 +35,10 @@ LOOP_RANDOM:
 	beq $t0, 4, PRINT_LOOP_RANDOM_RESET
 
 	li $a1, 6
-	li $v0, 42         # Service 42, random int
-	syscall            # Generate random int (returns in $a0)
+	li $v0, 42        		 # Service 42, random int
+	syscall           		 # Generate random int (returns in $a0)
 
-	beq $a0, 0, CBLUE
+	beq $a0, 0, CBLUE		 # Switch (valor)
 	beq $a0, 1, CGREEN
 	beq $a0, 2, CORANGE
 	beq $a0, 3, CWHITE
