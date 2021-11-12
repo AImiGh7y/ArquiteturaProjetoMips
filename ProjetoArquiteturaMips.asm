@@ -1,4 +1,7 @@
 .data
+
+#CODE GENERATOR
+
 ### WORD BANK ###
 BLUE:     .asciiz "B"
 GREEN:    .asciiz "G"
@@ -9,16 +12,27 @@ RED:      .asciiz "R"
 
 CODE: .space 16
 
-BOARD:
+MSG1: .asciiz "O Codigo e: "
+
+#PRINT BOARD
+
+BOARD: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
+
        
 SIZECOLS: .word 4
 SIZELINS: .word 10
 
-.eqv DATA_SIZE 4
+.eqv DATA_SIZE 4      #SAME AS #DEFINE in C
 
-MSG1: .asciiz "O Codigo é: "
+#READ TRIES
+
+MSG2: .asciiz "Tentativa:"
+
+#MISCELLANEOUS
+
 NewLine:    .asciiz     "\n"
 Tab:    .asciiz     "\t"
+buffer: .space 20
 
 .text
 
@@ -35,10 +49,10 @@ LOOP_RANDOM:
 	beq $t0, 4, PRINT_LOOP_RANDOM_RESET
 
 	li $a1, 6
-	li $v0, 42        		 # Service 42, random int
+	li $v0, 42         		 # Service 42, random int
 	syscall           		 # Generate random int (returns in $a0)
 
-	beq $a0, 0, CBLUE		 # Switch (valor)
+	beq $a0, 0, CBLUE		 #Switch (valor)
 	beq $a0, 1, CGREEN
 	beq $a0, 2, CORANGE
 	beq $a0, 3, CWHITE
@@ -102,7 +116,6 @@ PRINT_LOOP_RANDOM_RESET:
 j PRINT_LOOP_RANDOM
 
 PRINT_LOOP_RANDOM:
-
 	beq $s0, 16, BOARD_
 	
 	lw $t6, CODE($s0)
@@ -118,8 +131,7 @@ PRINT_LOOP_RANDOM:
 
 #------------------------------------------PRINT BOARD---------------------------------------------------------------------------------------------------------------------------------
 BOARD_:
-
-	li $v0, 4
+	li $v0, 4                		# printf("\n")
 	la $a0, NewLine
 	syscall
 	
@@ -130,30 +142,29 @@ BOARD_:
 	jal BOARD_PRINT
 	j END
 	
-BOARD_PRINT:  
-        
+BOARD_PRINT:
         add $t3, $zero, $a0
         add $t0, $zero, $zero           	# i = 0
 
-BOARD_PRINT_WHILE1:   				#First For printing the Matrix
+BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
        	li $t7, 0
         slt $t7, $t0, $a1                   	# if (i < size) continue
         beq $t7, $zero, BOARD_PRINT_END       	# If not, already printed all matrix 
     
-        add $t1, $zero, $zero               	# j = 0
+        li $t1, 0               		# j = 0
     
-BOARD_PRINT_WHILE2:
-        add $t6, $zero, $zero
-        slt $t6, $t1, $a2                  	# if (j < size) continue
+BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
+        add $t6, $zero, $zero	
+        slt $t6, $t1, $a2             		# if (j < size) continue
         beq $t6, $zero, BOARD_PRINT_END_LINE    # if not, already printed the whole line
  
-        mul $t5, $t0, $a1               	# c = i * size
-        add $t5, $t5, $t1               	# c += j
-        sll $t4, $t5, 2                 	# Converts J in the adress size defined previously
-        add $t5, $t4, $t3               	# c = matriz [i * size + j]
+        mul $t5, $t0, $a2  			# t5 = rowIndex * colSize
+        add $t5, $t5, $t1  			# t5 = (rowIndex * colSize) + colIndex
+        sll $t4, $t5, 2   			# t5 = (rowIndex * colSize + colIndex) * DATA_SIZE
+        add $t5, $t4, $t3  			# t5 = (rowIndex * colSize + colIndex * DATA_SIZE) + base adress
         
         li $v0, 1
-        lw $a0, 0($t5)                  	# printf("%d", c)
+        lw $a0, ($t5)                  		# printf("%d", tabuleiro[i][j])
         syscall
     
         li $v0, 4
@@ -173,6 +184,12 @@ BOARD_PRINT_END_LINE :                		# printf("\n")
             
 BOARD_PRINT_END:                      		# End
         jr $ra
+
+
+
+
+#------------------------------------------READ TRIES---------------------------------------------------------------------------------------------------------------------------------
+
 
 
 END:
