@@ -18,6 +18,8 @@ MSG1: .asciiz "O Codigo e: "
 
 BOARD: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
+eqmsg:      .asciiz     "strings are equal\n"
+nemsg:      .asciiz     "strings are not equal\n"
        
 SIZECOLS: .word 4
 SIZELINS: .word 10
@@ -26,7 +28,8 @@ SIZELINS: .word 10
 
 #READ TRIES
 
-MSG2: .asciiz "Tentativa:"
+MSG2: .asciiz " Tentativa:"
+TRIES: .space 80
 
 #MISCELLANEOUS
 
@@ -98,7 +101,7 @@ CYELLOW:
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
-CRED:    
+CRED:
 	la $a0, RED
 	sw $a0, CODE($s0)
 
@@ -151,6 +154,38 @@ BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
         slt $t7, $t0, $a1                   	# if (i < size) continue
         beq $t7, $zero, BOARD_PRINT_END       	# If not, already printed all matrix 
     
+    	li $v0, 1
+        addi $a0, $t0, 0
+        syscall
+    	
+       #---------------------------------------
+        la      $s2, TRIES
+    	la 	$s3, CODE
+       
+        la      $a0, MSG2
+        li      $v0, 4
+   	syscall
+       
+        # ler as tentativas
+        move 	$a0,$s2
+   	li      $a3,20
+    	li      $v0,8
+	syscall
+       
+COMPARE_LOOP:
+	lb      $t8,($s2)                   # get next char from TRIES
+	lb      $t9,($s3)                   # get next char from CODE
+	
+	bne     $t8,$t9,cmpne               # are they different? if yes, fly
+
+	beq     $t8,$zero,cmpeq             # at EOS? yes, fly (strings equal)
+
+	addi    $s2,$s2,4                   # point to next char
+	addi    $s3,$s3,4                 # point to next char
+	j       COMPARE_LOOP
+       
+       #--------------------------------------
+    
         li $t1, 0               		# j = 0
     
 BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
@@ -163,10 +198,8 @@ BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
         sll $t4, $t5, 2   			# t5 = (rowIndex * colSize + colIndex) * DATA_SIZE
         add $t5, $t4, $t3  			# t5 = (rowIndex * colSize + colIndex * DATA_SIZE) + base adress
         
-        li $v0, 1
-        lw $a0, ($t5)                  		# printf("%d", tabuleiro[i][j])
-        syscall
-    
+       
+    	
         li $v0, 4
         la $a0, Tab                 		# printf("\t")
         syscall
@@ -186,9 +219,21 @@ BOARD_PRINT_END:                      		# End
         jr $ra
 
 
+cmpne:
+    
+    la      $a0,nemsg
+    li      $v0,4
+    syscall
+    
+    j BOARD_PRINT_WHILE2
 
 
-#------------------------------------------READ TRIES---------------------------------------------------------------------------------------------------------------------------------
+cmpeq:
+
+    la      $a0,eqmsg
+    li      $v0,4
+    syscall
+    j       END
 
 
 
