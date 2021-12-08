@@ -3,14 +3,14 @@
 #CODE GENERATOR
 
 ### WORD BANK ###
-BLUE:     .asciiz "B"
-GREEN:    .asciiz "G"
-ORANGE:   .asciiz "O"
-WHITE:    .asciiz "W"
-YELLOW:   .asciiz "Y"
-RED:      .asciiz "R"
+BLUE:     .byte 'B'
+GREEN:    .byte 'G'
+ORANGE:   .byte 'O'
+WHITE:    .byte 'W'
+YELLOW:   .byte 'Y'
+RED:      .byte 'R'
 
-CODE: .space 16
+CODE: .space 16  # acho que pode ser apenas 4!!
 
 MSG1: .asciiz "O Codigo e: "
 
@@ -18,6 +18,8 @@ MSG1: .asciiz "O Codigo e: "
 
 BOARD: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
 
+eqmsg:      .asciiz     "strings are equal\n"
+nemsg:      .asciiz     "strings are not equal\n"
        
 SIZECOLS: .word 4
 SIZELINS: .word 10
@@ -27,6 +29,14 @@ SIZELINS: .word 10
 #READ TRIES
 
 MSG2: .asciiz " Tentativa:"
+TRIES: .space 80
+
+#E
+
+confirmation_e: .asciiz     "Prime 'e' para parar, outra tecla para continuar "
+e: .asciiz "e"
+input_e: .space 80
+
 
 #MISCELLANEOUS
 
@@ -43,6 +53,7 @@ buffer: .space 20
 main:
 	li $s0, 0
 	li $t1, 0
+	li $t0, 0
 	j LOOP_RANDOM
 
 LOOP_RANDOM:
@@ -59,50 +70,69 @@ LOOP_RANDOM:
 	beq $a0, 4, CYELLOW
 	beq $a0, 5, CRED
   
-CBLUE:    
+CBLUE:
 	la $a0, BLUE
-	sw $a0, CODE($s0)
-	addi $s0, $s0, 4
-	addi $t0, $t0 ,1
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
+
+	addi $s0, $s0, 1
+	addi $t0, $t0 ,1  # qual a diference entre estes??
 	j LOOP_RANDOM
 
 CGREEN:   
 	la $a0, GREEN
-	sw $a0, CODE($s0)
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
 CORANGE:  
 	la $a0, ORANGE
-	sw $a0, CODE($s0)
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
 CWHITE:  
 	la $a0, WHITE
-	sw $a0, CODE($s0)
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
 CYELLOW:  
 	la $a0, YELLOW
-	sw $a0, CODE($s0)
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
-CRED:    
+CRED:
 	la $a0, RED
-	sw $a0, CODE($s0)
+	lb $t4, 0($a0)
+	la $a0, CODE
+	add $a0, $a0, $s0
+	sb $t4, 0($a0)
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	addi $t0, $t0 ,1
 	j LOOP_RANDOM
 
@@ -115,16 +145,16 @@ PRINT_LOOP_RANDOM_RESET:
 
 j PRINT_LOOP_RANDOM
 
-PRINT_LOOP_RANDOM:
-	beq $s0, 16, BOARD_
+PRINT_LOOP_RANDOM:  # imprimir codigo
+	beq $s0, 4, BOARD_
 	
-	lw $t6, CODE($s0)
+	lb $t6, CODE($s0)
 	
-	li $v0, 4
+	li $v0, 11
 	move $a0, $t6
 	syscall
 
-	addi $s0, $s0, 4
+	addi $s0, $s0, 1
 	
 	j PRINT_LOOP_RANDOM
 
@@ -140,7 +170,7 @@ BOARD_:
 	lw $a2, SIZECOLS
 	
 	jal BOARD_PRINT
-	j END
+	j confirme_loop_e
 	
 BOARD_PRINT:
         add $t3, $zero, $a0
@@ -155,32 +185,66 @@ BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
         addi $a0, $t0, 0
         syscall
     	
-    
-#------------------------------------------READ TRIES--------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-    	la $a0, MSG2         #Load and print string asking for string
-        li $v0,4
+        #--------------------------------------------------------------------------READ TRIES---------------------------------------------------------------------------------------
+        la      $s2, TRIES
+        la  	$s4, CODE  			# s4 = apontador para CODE
+       
+        la      $a0, MSG2
+        li      $v0, 4
+   	syscall
+       
+        # ler as tentativas
+        move 	$a0,$s2
+        li      $a3,20
+        li      $v0,8
         syscall
+       
+        move    $s6, $zero  # s6 = contador do loop
+COMPARE_LOOP:
 
-	#				printf("\n(%d) Tentativa->", i);
-        #				gets(tentativa);
+	lb      $t8,($s2)                   # get next char from TRIES
+	
+	#lw      $t9, CODE($s3)
+	lb      $t9, 0($s4)          # get next "char" from CODE
+	
+	#PRINT CHAR DA STRING "CODE"
+	li $v0, 11
+	move $a0, $s5
+	syscall
+	
+	#PRINT STRING
+	li $v0, 11
+	move $a0, $t9
+	syscall
+	
+	#PRINT \n
+	li $v0, 4
+	la $a0, NewLine
+	syscall	
 
-        li $v0,8         #take in input
-        la $a0, buffer     #load byte space into address
-        li $a3, 20         #allot the byte space for string
-        move $t9,$a0         #save string to t0
-        syscall
-         
-        la $a0, buffer     #reload byte space to primary address
-        move $a0,$t9         #primary address = t0 address (load pointer)
-        li $v0,4         #print string
-        syscall
+	#PRINT CHAR DA STRING INPUT
+	li $v0, 11
+	move $a0, $t8
+	syscall
+	
+	#PRINT \n
+	li $v0, 4
+	la $a0, NewLine
+	syscall
+			
+	bne     $t8,$t9,cmpne              # they are different
+
+	addi    $s2,$s2,1                  # point to next char no input
+	addi    $s3,$s3,4                  # point to next char  (estamos a usar??)
+	addi    $s4,$s4,1                  # point to next char no code
+	
+	addi    $s6, $s6, 1  		   # incrementar s6 = contador do loop
+	beq      $s6, 4, cmpeq
+	j       COMPARE_LOOP
+       
+       #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
     
-#----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-    
-    
-        li $t1, 0               		# j = 0
+       li $t1, 0               		# j = 0
     
 BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
         add $t6, $zero, $zero	
@@ -213,9 +277,53 @@ BOARD_PRINT_END:                      		# End
         jr $ra
 
 
+cmpne:
+    
+       la      $a0,nemsg
+       li      $v0,4
+       syscall
+    
+       j BOARD_PRINT_WHILE2
 
 
+cmpeq:
 
+       la      $a0,eqmsg
+       li      $v0,4
+       syscall
+       j confirme_loop_e
+
+#------------------------------------------------------------------E-----------------------------------------------------------------------------------
+
+confirme_loop_e:
+
+    la $a0, confirmation_e
+    li $v0,4
+    syscall
+    
+    la      $s2, input_e
+    move    $t2, $s2
+    
+    move    $a0,$t2
+    li      $a1,79
+    li      $v0,8
+    syscall
+   
+    la $s3, e
+    j compare_e
+
+compare_e:
+
+     lb      $t2,($s2)                  # get next char from str1
+     lb      $t3,($s3)                  # get next char from str2
+     
+     bne     $t2,$t3, main              # are they different? if yes, fly
+
+     beq     $t2,$zero, END             # at EOS? yes, fly (strings equal)
+
+     addi    $s2,$s2,4                  # point to next char
+     addi    $s3,$s3,4                  # point to next char
+     j       compare_e
 
 
 END:
