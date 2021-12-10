@@ -14,6 +14,7 @@ CODE: .space 16  # acho que pode ser apenas 4!!
 
 MSG1: .asciiz "O Codigo e: "
 
+ERROR: .asciiz "Introduza uma cor do universo de cores (B, G, O, W, Y, R)"
 
 #PONTOS
 
@@ -191,6 +192,7 @@ PRINT_LOOP_RANDOM:  # imprimir codigo
 
 
 #------------------------------------------PRINT BOARD---------------------------------------------------------------------------------------------------------------------------------
+
 BOARD_:
 
 	li $t6, 0
@@ -254,6 +256,13 @@ COMPARE_LOOP_GOOD:
 	lb 	$s0, RED	
 	beq     $t8, $s0, GOOD  
 	
+	li $v0, 4
+	la $a0, ERROR
+	syscall
+	
+	li $v0, 4                		# printf("\n")
+	la $a0, NewLine
+	syscall
 	
 	j BOARD_PRINT_WHILE1
 	
@@ -264,15 +273,15 @@ GOOD:
 
 
 COMPARE_LOOP_RESET:  
-   la $s2, TRIES
-   la $s4, CODE
-   li $t6, 0
+	la $s2, TRIES
+	la $s4, CODE
+	li $t6, 0
    
-   li $v0, 4
-   la $a0, NewLine                 		# printf("\n")
-   syscall
+	li $v0, 4
+	la $a0, NewLine                 		# printf("\n")
+	syscall
    
-   j COMPARE_LOOP
+	j COMPARE_LOOP
 
 COMPARE_LOOP:
 	lb      $t8,($s2)                   # get next char from TRIES
