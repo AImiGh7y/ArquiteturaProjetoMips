@@ -16,6 +16,11 @@ MSG1: .asciiz "O Codigo e: "
 
 ERROR: .asciiz "Introduza uma cor do universo de cores (B, G, O, W, Y, R)"
 
+BLACKCOUNTMSG: .asciiz "Tens "
+
+BLACKCOUNTMSG1: .asciiz " cores na posicao correta"
+
+
 #PONTOS
 
 PONTOS1: .asciiz "Ten(s) "
@@ -239,7 +244,7 @@ BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
         
 COMPARE_LOOP_GOOD:
 
-	beq $t6, 4, COMPARE_LOOP_RESET
+	beq $t6, 4, BLACKCOUNT_RESET
 	
 	lb      $t8,($s2)                   # get next char from TRIES
 	
@@ -272,7 +277,41 @@ GOOD:
 	j COMPARE_LOOP_GOOD
 
 
-COMPARE_LOOP_RESET:  
+BLACKCOUNT_RESET:  
+	
+	la      $s2, TRIES			# s2 = apontador para TRIES
+        la  	$s4, CODE  			# s4 = apontador para CODE
+	
+	li $s5, 0			                #BLACKCOUNT
+   	li $t6, 0
+   	
+	j BLACKCOUNT
+
+BLACKCOUNT:
+	
+	beq     $t6, 4, COMPARE_LOOP_RESET
+
+	lb      $t8,($s2)                   # get next char from TRIES
+	lb      $t9, 0($s4)          # get next "char" from CODE
+
+	addi    $t6, $t6, 1		#counter
+			
+	beq     $t8,$t9, BLACK_COUNTER              # they are the same
+	
+	addi    $s2,$s2,1                  # point to next char no input
+	addi    $s4,$s4,1                  # point to next char no code	
+	
+	j BLACKCOUNT
+
+BLACK_COUNTER:
+	addi    $s2,$s2,1                  # point to next char no input
+	addi    $s4,$s4,1                  # point to next char no code	
+	addi 	$s5, $s5, 1		   #Blackcount++
+	j BLACKCOUNT
+
+
+COMPARE_LOOP_RESET:
+  
 	la $s2, TRIES
 	la $s4, CODE
 	li $t6, 0
@@ -281,21 +320,41 @@ COMPARE_LOOP_RESET:
 	la $a0, NewLine                 		# printf("\n")
 	syscall
    
+   	li $v0, 4
+	la $a0, BLACKCOUNTMSG                 		
+	syscall
+   
+   	li $v0, 1
+   	move $a0, $s5
+   	syscall
+   
+   	li $v0, 4
+	la $a0, BLACKCOUNTMSG1                 		
+	syscall
+   
+   
+	li $v0, 4
+	la $a0, NewLine                 		# printf("\n")
+	syscall
+   
+   
 	j COMPARE_LOOP
+
+
 
 COMPARE_LOOP:
 	lb      $t8,($s2)                   # get next char from TRIES
-	
+
 	lb      $t9, 0($s4)          # get next "char" from CODE
-	
 						
 	bne     $t8,$t9,cmpne              # they are different
 
 	addi    $s2,$s2,1                  # point to next char no input
-	addi    $s4,$s4,1                  # point to next char no code
-	
+	addi    $s4,$s4,1                  # point to next char no code	
 	addi    $s6, $s6, 1  		   # incrementar s6 = contador do loop
+
 	beq      $s6, 4, cmpeq
+
 	j COMPARE_LOOP
        
        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
@@ -312,13 +371,10 @@ BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
         
         
         lb      $t8, 0($s2)          		# get next char from TRIES
-        move    $t5, $t8			# move content to inside the position in the matrix
-    
-    	        
-        li $v0, 11				#print content inside of the matrix
-        move $a0, $t8				#only prints one line (change)
+  	
+        li $v0, 11				
+        move $a0, $t8				
         syscall
-    
     
         li $v0, 4
         la $a0, Tab                 		# printf("\t")
@@ -392,8 +448,8 @@ compare_e:
 
      addi    $s2,$s2,4                  # point to next char
      addi    $s3,$s3,4                  # point to next char
+     
      j       compare_e
-
 
 END:
 	li $v0, 10
