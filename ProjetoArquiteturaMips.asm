@@ -14,12 +14,18 @@ CODE: .space 16  # acho que pode ser apenas 4!!
 
 MSG1: .asciiz "O Codigo e: "
 
+
+#PONTOS
+
+PONTOS1: .asciiz "Ten(s) "
+PONTOS2: .asciiz " pontos!"
+PONTOSF1: .asciiz "Acabas te com "
+PONTOS3: .asciiz "Ganhaste! Recebes 12 pontos"
+
+
 #PRINT BOARD
 
-BOARD: .word 0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0
-
-eqmsg:      .asciiz     "strings are equal\n"
-nemsg:      .asciiz     "strings are not equal\n"
+BOARD: .space 40
        
 SIZECOLS: .word 4
 SIZELINS: .word 10
@@ -33,7 +39,7 @@ TRIES: .space 80
 
 #E
 
-confirmation_e: .asciiz     "Prime 'e' para parar, outra tecla para continuar "
+confirmation_e: .asciiz     "Prime 'e' para parar, outra tecla para continuar"
 e: .asciiz "e"
 input_e: .space 80
 
@@ -46,14 +52,39 @@ buffer: .space 20
 
 .text
 
-
 #-----------------------------CODE GENERATOR------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 
 main:
+
+	li $s7, 0   #pontos
+	
+	j LOOP_GAME
+	
+	
+LOOP_GAME:
+
 	li $s0, 0
 	li $t1, 0
 	li $t0, 0
+
+	li $v0, 4                		# printf("\n")
+	la $a0, PONTOS1
+	syscall
+	
+	li $v0, 1                		
+	move $a0, $s7
+	syscall
+	
+	li $v0, 4                		# printf("\n")
+	la $a0, PONTOS2
+	syscall
+	
+	li $v0, 4                		# printf("\n")
+	la $a0, NewLine
+	syscall
+
+	
 	j LOOP_RANDOM
 
 LOOP_RANDOM:
@@ -161,6 +192,9 @@ PRINT_LOOP_RANDOM:  # imprimir codigo
 
 #------------------------------------------PRINT BOARD---------------------------------------------------------------------------------------------------------------------------------
 BOARD_:
+
+	li $t6, 0
+
 	li $v0, 4                		# printf("\n")
 	la $a0, NewLine
 	syscall
@@ -177,7 +211,7 @@ BOARD_PRINT:
         add $t0, $zero, $zero           	# i = 0
 
 BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
-       	li $t7, 0
+
         slt $t7, $t0, $a1                   	# if (i < size) continue
         beq $t7, $zero, BOARD_PRINT_END       	# If not, already printed all matrix 
     
@@ -185,66 +219,77 @@ BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
         addi $a0, $t0, 0
         syscall
     	
-        #--------------------------------------------------------------------------READ TRIES---------------------------------------------------------------------------------------
-        la      $s2, TRIES
-        la  	$s4, CODE  			# s4 = apontador para CODE
-       
-        la      $a0, MSG2
+    	la      $a0, MSG2
         li      $v0, 4
    	syscall
+    	
+        #--------------------------------------------------------------------------READ TRIES---------------------------------------------------------------------------------------
+        la      $s2, TRIES			# s2 = apontador para TRIES
+        la  	$s4, CODE  			# s4 = apontador para CODE
        
-        # ler as tentativas
-        move 	$a0,$s2
+       
+        move 	$a0,$s2				# ler as tentativas
         li      $a3,20
         li      $v0,8
         syscall
        
-        move    $s6, $zero  # s6 = contador do loop
-COMPARE_LOOP:
+        move    $s6, $zero  			# s6 = contador do loop
+        
+COMPARE_LOOP_GOOD:
 
+	beq $t6, 4, COMPARE_LOOP_RESET
+	
 	lb      $t8,($s2)                   # get next char from TRIES
 	
-	#lw      $t9, CODE($s3)
+	lb 	$s0, WHITE			 # they are valid
+	beq     $t8, $s0, GOOD            
+	lb 	$s0, BLUE
+	beq     $t8, $s0, GOOD  
+	lb 	$s0, GREEN		
+	beq     $t8, $s0, GOOD  
+	lb 	$s0, YELLOW	
+	beq     $t8, $s0, GOOD  
+	lb 	$s0, ORANGE	
+	beq     $t8, $s0, GOOD  
+	lb 	$s0, RED	
+	beq     $t8, $s0, GOOD  
+	
+	
+	j BOARD_PRINT_WHILE1
+	
+GOOD:
+	addi 	$t6, $t6, 1		   #incrementar loop para verificar GOOD
+	addi    $s2,$s2,1                  # point to next char no input
+	j COMPARE_LOOP_GOOD
+
+
+COMPARE_LOOP_RESET:  
+   la $s2, TRIES
+   la $s4, CODE
+   li $t6, 0
+   
+   li $v0, 4
+   la $a0, NewLine                 		# printf("\n")
+   syscall
+   
+   j COMPARE_LOOP
+
+COMPARE_LOOP:
+	lb      $t8,($s2)                   # get next char from TRIES
+	
 	lb      $t9, 0($s4)          # get next "char" from CODE
 	
-	#PRINT CHAR DA STRING "CODE"
-	li $v0, 11
-	move $a0, $s5
-	syscall
-	
-	#PRINT STRING
-	li $v0, 11
-	move $a0, $t9
-	syscall
-	
-	#PRINT \n
-	li $v0, 4
-	la $a0, NewLine
-	syscall	
-
-	#PRINT CHAR DA STRING INPUT
-	li $v0, 11
-	move $a0, $t8
-	syscall
-	
-	#PRINT \n
-	li $v0, 4
-	la $a0, NewLine
-	syscall
-			
+						
 	bne     $t8,$t9,cmpne              # they are different
 
 	addi    $s2,$s2,1                  # point to next char no input
-	addi    $s3,$s3,4                  # point to next char  (estamos a usar??)
 	addi    $s4,$s4,1                  # point to next char no code
 	
 	addi    $s6, $s6, 1  		   # incrementar s6 = contador do loop
 	beq      $s6, 4, cmpeq
-	j       COMPARE_LOOP
+	j COMPARE_LOOP
        
        #--------------------------------------------------------------------------------------------------------------------------------------------------------------------
-    
-       li $t1, 0               		# j = 0
     
 BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
         add $t6, $zero, $zero	
@@ -253,19 +298,29 @@ BOARD_PRINT_WHILE2:				#Second for loop printing the Matrix
  
         mul $t5, $t0, $a2  			# t5 = rowIndex * colSize
         add $t5, $t5, $t1  			# t5 = (rowIndex * colSize) + colIndex
-        sll $t4, $t5, 2   			# t5 = (rowIndex * colSize + colIndex) * DATA_SIZE
+        sll $t4, $t5, 0   			# t5 = (rowIndex * colSize + colIndex) * DATA_SIZE
         add $t5, $t4, $t3  			# t5 = (rowIndex * colSize + colIndex * DATA_SIZE) + base adress
         
-       
-    	
+        
+        lb      $t8, 0($s2)          		# get next char from TRIES
+        move    $t5, $t8			# move content to inside the position in the matrix
+    
+    	        
+        li $v0, 11				#print content inside of the matrix
+        move $a0, $t8				#only prints one line (change)
+        syscall
+    
+    
         li $v0, 4
         la $a0, Tab                 		# printf("\t")
         syscall
-    
+    	
+    	addi $s2, $s2, 1			# point to next char no input
         addi $t1, $t1, 1                	# j++
         j BOARD_PRINT_WHILE2
  
 BOARD_PRINT_END_LINE :                		# printf("\n")
+	
         li $v0, 4
         la $a0, NewLine
         syscall
@@ -276,22 +331,27 @@ BOARD_PRINT_END_LINE :                		# printf("\n")
 BOARD_PRINT_END:                      		# End
         jr $ra
 
-
+ j BOARD_PRINT_WHILE2
+ 
 cmpne:
-    
-       la      $a0,nemsg
-       li      $v0,4
-       syscall
-    
+       la $s2, TRIES
+       li $t1, 0
        j BOARD_PRINT_WHILE2
 
 
 cmpeq:
-
-       la      $a0,eqmsg
-       li      $v0,4
-       syscall
-       j confirme_loop_e
+ 	 li $v0, 4                		
+	 la $a0, PONTOS3
+	 syscall
+       
+	 li $v0, 4                		
+	 la $a0, NewLine
+	 syscall
+	       
+	                     
+         addi $s7, $s7, 12
+     
+         j confirme_loop_e
 
 #------------------------------------------------------------------E-----------------------------------------------------------------------------------
 
@@ -317,7 +377,7 @@ compare_e:
      lb      $t2,($s2)                  # get next char from str1
      lb      $t3,($s3)                  # get next char from str2
      
-     bne     $t2,$t3, main              # are they different? if yes, fly
+     bne     $t2,$t3, LOOP_GAME              # are they different? if yes, fly
 
      beq     $t2,$zero, END             # at EOS? yes, fly (strings equal)
 
