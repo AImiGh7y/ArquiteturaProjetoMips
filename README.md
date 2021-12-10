@@ -10,7 +10,8 @@ A-Fazer Matriz
 B-Sortear um Codigo 
 (Feito)
 
-C-Ler uma Tentativa (Falta no Caso esta sequência não seja válida, o programa irá solicitar ao utilizador uma nova combinação.)
+C-Ler uma Tentativa, caso esta sequência não seja válida, o programa irá solicitar ao utilizador uma nova combinação.
+(Feito)
 
 D- Após cada jogada será impresso na consola o estado do atual tabuleiro (FALTA)
 
