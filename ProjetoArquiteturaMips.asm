@@ -14,19 +14,22 @@ CODE: .space 16  # acho que pode ser apenas 4!!
 
 MSG1: .asciiz "O Codigo e: "
 
+MSG3: .asciiz "O Codigo era: "
+
 ERROR: .asciiz "Introduza uma cor do universo de cores (B, G, O, W, Y, R)"
 
 BLACKCOUNTMSG: .asciiz "Tens "
 
 BLACKCOUNTMSG1: .asciiz " cores na posicao correta"
 
+LOSE: .asciiz "Perdeste!"
 
 #PONTOS
 
 PONTOS1: .asciiz "Ten(s) "
 PONTOS2: .asciiz " pontos!"
-PONTOSF1: .asciiz "Acabas te com "
-PONTOS3: .asciiz "Ganhaste! Recebes 12 pontos"
+PONTOS3: .asciiz "Ganhaste!"
+PONTOS4: .asciiz "Recebeste "
 
 
 #PRINT BOARD
@@ -211,7 +214,7 @@ BOARD_:
 	lw $a2, SIZECOLS
 	
 	jal BOARD_PRINT
-	j confirme_loop_e
+	j PRINT_LOOP_RANDOM_RESET_END
 	
 BOARD_PRINT:
         add $t3, $zero, $a0
@@ -391,8 +394,55 @@ BOARD_PRINT_END_LINE :                		# printf("\n")
         syscall
     
         addi $t0, $t0, 1                	# i++
+        
+        beq $t0, 10, POINTS
+        
         j BOARD_PRINT_WHILE1
-            
+        
+POINTS:
+
+	mul $s6, $s5, 3				#last round x3 number of correct guesses
+	add $s7, $s7, $s6			#3x + previous points
+        
+        beq $s6, 0, LOST			#missed everything
+        
+        li $v0, 4                		
+	la $a0, PONTOS4
+	syscall
+        
+        li $v0, 1		
+	move $a0, $s6
+	syscall
+        
+        li $v0, 4                		
+	la $a0, PONTOS2
+	syscall
+	 
+	li $v0, 4
+        la $a0, NewLine
+        syscall
+	 
+        j BOARD_PRINT_WHILE1
+
+LOST:
+
+	li $v0, 4
+	la $a0, LOSE
+	syscall
+	
+	li $v0, 4
+        la $a0, NewLine
+        syscall
+	
+	bne $s7, 0, LOST_POINTS
+	
+	j BOARD_PRINT_WHILE1
+	
+LOST_POINTS:
+
+	sub $s7, $s7, 3
+	j BOARD_PRINT_WHILE1
+
 BOARD_PRINT_END:                      		# End
         jr $ra
 
@@ -405,6 +455,7 @@ cmpne:
 
 
 cmpeq:
+
  	 li $v0, 4                		
 	 la $a0, PONTOS3
 	 syscall
@@ -416,26 +467,72 @@ cmpeq:
 	                     
          addi $s7, $s7, 12
      
-         j confirme_loop_e
+         j PRINT_LOOP_RANDOM_RESET_END
+
+
+PRINT_LOOP_RANDOM_RESET_END:
+	li $s0, 0
+	la $t0, MSG3
+	li $v0, 4
+	move $a0, $t0
+	syscall
+	j PRINT_LOOP_RANDOM_END
+
+PRINT_LOOP_RANDOM_END:  # imprimir codigo
+	beq $s0, 4, confirme_loop_e
+	
+	lb $t6, CODE($s0)
+	
+	li $v0, 11
+	move $a0, $t6
+	syscall
+
+	addi $s0, $s0, 1
+	
+	j PRINT_LOOP_RANDOM_END
 
 #------------------------------------------------------------------E-----------------------------------------------------------------------------------
 
 confirme_loop_e:
 
-    la $a0, confirmation_e
-    li $v0,4
-    syscall
+	li $v0, 4                		
+	la $a0, NewLine
+	syscall
+
+ 	li $v0, 4                		
+	la $a0, PONTOS1
+	syscall
+
+	li $v0, 1		
+	move $a0, $s7
+	syscall
+
+	li $v0, 4                		
+	la $a0, PONTOS2
+	syscall
+
+	li $v0, 4                		
+	la $a0, NewLine
+	syscall
+
+   	la $a0, confirmation_e
+   	li $v0,4
+    	syscall
     
-    la      $s2, input_e
-    move    $t2, $s2
+     	li $v0, 4                		
+	la $a0, NewLine
+	syscall
     
-    move    $a0,$t2
-    li      $a1,79
-    li      $v0,8
-    syscall
+    	la      $s2, input_e
+    	move    $t2, $s2
+    
+    	move    $a0,$t2
+    	li      $a1,79
+    	li      $v0,8
+    	syscall
    
-    la $s3, e
-    j compare_e
+    	la $s3, e
+    	j compare_e
 
 compare_e:
 
