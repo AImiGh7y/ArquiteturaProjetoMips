@@ -5,18 +5,18 @@ Trabalho de Arquitetura de computadores 2021/2022
 Developed by: - Pedro & Nuno Industries
                
 A-Fazer Matriz 
-(Feito)
+(FEITO)
 
 B-Sortear um Codigo 
-(Feito)
+(FEITO)
 
 C-Ler uma Tentativa, caso esta sequência não seja válida, o programa irá solicitar ao utilizador uma nova combinação.
-(Feito)
+(FEITO)
 
 D- Após cada jogada será impresso na consola o estado do atual tabuleiro (FALTA)
 
 E-A validação da combinação é automática sendo apresentado o número de cores 
-corretas  numa  posição  certa,  e  o  número  de  cores  corretas  nas  posições  erradas. 
+corretas  numa  posição  certa (FEITO),  e  o  número  de  cores  corretas  nas  posições  erradas. 
 Atenção, que esta validação nunca deve indicar qual é a cor correta e a sua posição (cf. 
 Regras do Mastermind). 
 (FALTA)
@@ -33,12 +33,12 @@ contrapartida quando perder será-lhe-á retirado três pontos; contudo um utili
 poderá  ter  pontuações  negativas.  Na  última  jogada,  caso  este  tenha  acertado 
 parcialmente  na  combinação,  este  deve  somar  três  pontos  por  cor  correta  na  posição 
 certa. 
-(FALTA)
+(FEITO)
 
 H-A  aplicação  deverá  permitir  no  final  da  partida  apresentar  a  pontuação  atual. 
 Esta  deve  contemplar  todos  os  pontos  acumulados  pelo  utilizador  desde  o  início  da 
 aplicação. 
-(FALTA)
+(FEITO)
 
 I-A aplicação será finalizada quando a tecla ‘e’ for executada, após ter finalizado uma partida 
 (FEITO)
