@@ -46,6 +46,11 @@ SIZELINS: .word 10
 MSG2: .asciiz " Tentativa:"
 TRIES: .space 80
 
+TRIES_TEMP: .space 80
+CODE_TEMP: .space 80
+REMOVE_TRY:       .byte 'X'
+REMOVE_CODE:      .byte 'Z'
+
 #E
 
 confirmation_e: .asciiz     "Prime 'e' para parar, outra tecla para continuar"
@@ -247,7 +252,7 @@ BOARD_PRINT_WHILE1:   				#First for loop printing the Matrix
         
 COMPARE_LOOP_GOOD:
 
-	beq $t6, 4, BLACKCOUNT_RESET
+	beq $t6, 4, START_COMPARE
 	
 	lb      $t8,($s2)                   # get next char from TRIES
 	
@@ -280,10 +285,33 @@ GOOD:
 	j COMPARE_LOOP_GOOD
 
 
+
 ## black = cor certa, posicao certa
 
+START_COMPARE:
+	# comeca por copiar o TRIES e o CODE para variaveis temporarias
+	li $t0, 0
+START_COMPARE_LOOP:
+	la $t1, TRIES
+	la $t2, TRIES_TEMP
+	add $t1, $t1, $t0
+	add $t2, $t2, $t0
+	lb $t3, 0($t1)
+	sb $t3, 0($t2)
+
+	la $t1, CODE
+	la $t2, CODE_TEMP
+	add $t1, $t1, $t0
+	add $t2, $t2, $t0
+	lb $t3, 0($t1)
+	sb $t3, 0($t2)
+
+	addi $t0, $t0, 1
+	beq $t0, 4, BLACKCOUNT_RESET
+	j START_COMPARE_LOOP
+
+
 BLACKCOUNT_RESET:  
-	
 	la      $s2, TRIES			# s2 = apontador para TRIES
         la  	$s4, CODE  			# s4 = apontador para CODE
 	
@@ -299,19 +327,29 @@ BLACKCOUNT:
 	lb      $t8, 0($s2)                   # get next char from TRIES
 	lb      $t9, 0($s4)          # get next "char" from CODE
 
-	addi    $t6, $t6, 1		#counter
-			
 	beq     $t8,$t9, BLACK_COUNTER              # they are the same
 	
+	addi    $t6, $t6, 1		#counter
 	addi    $s2,$s2,1                  # point to next char no input
 	addi    $s4,$s4,1                  # point to next char no code	
 	
 	j BLACKCOUNT
 
 BLACK_COUNTER:
-	#li $t0, 0   # modifica valor do TRIES (para zero) para nao voltar a contar
-	#sw $t0, 0($s2)
+	# modificamos o valor do TRIES (para zero) para nao voltar a contar
+	la $t0, REMOVE_TRY
+	lb $t0, 0($t0)
+	la $t1, TRIES_TEMP
+	add $t1, $t1, $t6
+	sb $t0, 0($t1)
+	# modificamos o valor do CODE (para um) para nao voltar a contar
+	la $t0, REMOVE_CODE
+	lb $t0, 0($t0)
+	la $t1, CODE_TEMP
+	add $t1, $t1, $t6
+	sb $t0, 0($t1)
 
+	addi    $t6, $t6, 1		#counter
 	addi    $s2,$s2,1                  # point to next char no input
 	addi    $s4,$s4,1                  # point to next char no code	
 	addi 	$s5, $s5, 1		   #Blackcount++
@@ -319,11 +357,10 @@ BLACK_COUNTER:
 
 
 TERMINA_BLACKCOUNT:
-  
-	la $s2, TRIES
-	la $s4, CODE
-	li $t6, 0
-   
+	la $s2, TRIES         # <---- esta linha nao precisa existir
+	la $s4, CODE          # <---- esta linha nao precisa existir
+	li $t6, 0             # <---- esta linha nao precisa existir
+
 	li $v0, 4
 	la $a0, NewLine                 		# printf("\n")
 	syscall
@@ -348,16 +385,17 @@ TERMINA_BLACKCOUNT:
 	j WHITECOUNT_RESET
 
 ## white = cor certa, posicao errada
+# o WHITE usa o TRIES_TEMP e CODE_TEMP em que foram eliminados os caracteres encontrados
 
 WHITECOUNT_RESET:
    	li $t6, 0       # iterador do CODE
-        la $s4, CODE  			# s4 = apontador para CODE
+        la $s4, CODE_TEMP  			# s4 = apontador para CODE
 	li $s6, 0       # WHITECOUNT
 	j WHITECOUNT_EACH_CODE
 
 WHITECOUNT_EACH_CODE:
 	beq     $t6, 4, TERMINA_WHITECOUNT
-	la $s2, TRIES			# s2 = apontador para TRIES
+	la $s2, TRIES_TEMP			# s2 = apontador para TRIES
    	li $t7, 0       # iterador do TRIES
 	j WHITECOUNT
 
@@ -390,7 +428,6 @@ WHITE_COUNTER:
 
 
 TERMINA_WHITECOUNT:
-  
 	la $s2, TRIES
 	la $s4, CODE
 	li $t6, 0
